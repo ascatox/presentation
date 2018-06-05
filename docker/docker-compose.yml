@@ -30,22 +30,17 @@ services:
   postgres:
         #restart: always
      image: postgres:latest
-     volumes_from:
-        - data
+     volumes:
+        - ./data/postgres:/var/lib/postgresql/data
      ports:
         - "5432:5432"
 
-  data:
-        #restart: always
-        image: postgres:latest
-        volumes:
-            - ./data/postgres/data:/var/lib/postgresql
-        command: /bin/true
-
   wirecloud:
-        #restart: always
         image: fiware/wirecloud:latest-composable
-        links:
-            - postgres:postgres
+        depends_on:
+            - postgres
+        volumes:
+            - ./data/wirecloud/wirecloud_instance:/opt/wirecloud_instance
+            - ./data/wirecloud/static:/var/www/static
 
         
