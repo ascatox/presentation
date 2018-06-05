@@ -1,15 +1,11 @@
 version: '2'
 services:
    # orion
-  mongodata:  
-   image: mongo:3.4
-   volumes: 
-    - ~/docker/orion/data:/data/db
-   command: --break-mongo
   mongo:  
    image: mongo:3.4
-   volumes_from: 
-      - mongodata
+   command: --nojournal
+   volumes:
+     - ./mongo/data:/data/db
   orion:
    image: fiware/orion:1.13.0
    depends_on:
