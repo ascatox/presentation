@@ -23,7 +23,7 @@ services:
     #restart: always
     image: nginx:latest
     ports:
-        - "8180:80"
+        - "8280:80"
     volumes:
         - ./nginx.conf:/etc/nginx/nginx.conf:ro
     volumes_from:
@@ -31,25 +31,25 @@ services:
     links:
         - wirecloud:wirecloud
 
-postgres:
-    #restart: always
-    image: postgres:latest
-    volumes_from:
-        - data
-    ports:
-        - "5432:5432"
+    postgres:
+        #restart: always
+        image: postgres:latest
+        volumes_from:
+            - data
+        ports:
+            - "5432:5432"
 
-data:
-    #restart: always
-    image: postgres:latest
-    volumes:
-        - ./postgres/data:/var/lib/postgresql
-    command: /bin/true
+    data:
+        #restart: always
+        image: postgres:latest
+        volumes:
+            - ./postgres/data:/var/lib/postgresql
+        command: /bin/true
 
-wirecloud:
-    #restart: always
-    image: fiware/wirecloud:latest-composable
-    links:
-        - postgres:postgres
+    wirecloud:
+        #restart: always
+        image: fiware/wirecloud:latest-composable
+        links:
+            - postgres:postgres
 
         
