@@ -1,0 +1,55 @@
+version: '2'
+services:
+   # orion
+  mongodata:  
+   image: mongo:3.4
+   volumes: 
+    - ~/docker/orion/data:/data/db
+   command: --break-mongo
+  mongo:  
+   image: mongo:3.4
+   volumes_from: 
+      - mongodata
+  
+  orion:
+   image: fiware/orion:1.13.0
+   depends_on:
+    - mongo
+   ports: 
+    - "1026:1026"
+   #environment:
+   command:  -dbhost mongo
+  nginx:
+    #restart: always
+    image: nginx:latest
+    ports:
+        - "8180:80"
+    volumes:
+        - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    volumes_from:
+        - wirecloud
+    links:
+        - wirecloud:wirecloud
+
+postgres:
+    #restart: always
+    image: postgres:latest
+    volumes_from:
+        - data
+    ports:
+        - "5432:5432"
+
+data:
+    #restart: always
+    image: postgres:latest
+    volumes:
+        - ./postgres/data:/var/lib/postgresql
+    command: /bin/true
+
+wirecloud:
+    #restart: always
+    image: fiware/wirecloud:latest-composable
+    links:
+        - postgres:postgres
+
+        
