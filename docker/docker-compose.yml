@@ -43,4 +43,4 @@ services:
             - ./data/wirecloud/wirecloud_instance:/opt/wirecloud_instance
             - ./data/wirecloud/static:/var/www/static
 
-        
+
