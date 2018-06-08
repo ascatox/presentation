@@ -1,8 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const schedule = require("node-schedule");
-const config = require("./conf/config");
+const node_ledger_client_1 = require("node-ledger-client");
+const config_1 = require("./conf/config");
 var NGSI = require('ngsijs');
+//Fabric config
+const config_fabric_network_1 = require("./conf/config-fabric-network");
+var peerName = 'peer0.org1.example.com';
+var ccid = 'productunithub';
+var eventId = "EVENT";
+var handler = null;
+//
 /**
  * Returns a random number between min (inclusive) and max (exclusive)
  */
@@ -25,10 +33,10 @@ function randomString(length, chars) {
 function generateRandomEvent() {
     var event = {};
     event.serialNumberItem = randomString(16, '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-    event.itemType = config.default.itemTypes[Math.floor(Math.random() * config.default.itemTypes.length)];
-    event.bayId = "bay_" + getRandomInt(1, config.default.bay.n_bays);
-    event.bayCapacity = getRandomInt(0, config.default.bay.capacity_max);
-    event.bayLoad = getRandomInt(0, config.default.bay.load_max);
+    event.itemType = config_1.default.itemTypes[Math.floor(Math.random() * config_1.default.itemTypes.length)];
+    event.bayId = "bay_" + getRandomInt(1, config_1.default.bay.n_bays);
+    event.bayCapacity = getRandomInt(0, config_1.default.bay.capacity_max);
+    event.bayLoad = getRandomInt(0, config_1.default.bay.load_max);
     return event;
 }
 ;
@@ -40,13 +48,13 @@ function extractAttributesFromEventPayload(eventPayload) {
     return attributes;
 }
 function createEntity(id, type) {
-    var connection = new NGSI.Connection("http://" + config.default.contextBroker.host + ":" + config.default.contextBroker.port);
+    var connection = new NGSI.Connection("http://" + config_1.default.contextBroker.host + ":" + config_1.default.contextBroker.port);
     var createEntity = connection.v2.createEntity({
         "id": id,
         "type": type,
     }, {
-        service: config.default.service,
-        servicepath: config.default.subservice
+        service: config_1.default.service,
+        servicepath: config_1.default.subservice
     });
     createEntity.then((response) => {
         // Entity created successfully
@@ -65,8 +73,8 @@ function updateEntity(id, type, attributes) {
     payload.id = id;
     payload.type = type;
     var optionPayload = {
-        service: config.default.service,
-        servicepath: config.default.subservice
+        service: config_1.default.service,
+        servicepath: config_1.default.subservice
     };
     for (var property in attributes) {
         if (attributes.hasOwnProperty(property)) {
@@ -76,7 +84,7 @@ function updateEntity(id, type, attributes) {
             payload[property] = valueAttribute;
         }
     }
-    var connection = new NGSI.Connection("http://" + config.default.contextBroker.host + ":" + config.default.contextBroker.port);
+    var connection = new NGSI.Connection("http://" + config_1.default.contextBroker.host + ":" + config_1.default.contextBroker.port);
     connection.v2.appendEntityAttributes(payload, optionPayload).then((response) => {
         // Attributes appended successfully
         // response.correlator transaction id associated with the server response
@@ -89,10 +97,10 @@ function updateEntity(id, type, attributes) {
     });
 }
 function getEntities() {
-    var connection = new NGSI.Connection("http://" + config.default.contextBroker.host + ":" + config.default.contextBroker.port);
+    var connection = new NGSI.Connection("http://" + config_1.default.contextBroker.host + ":" + config_1.default.contextBroker.port);
     var optionPayload = {
-        service: config.default.service,
-        servicepath: config.default.subservice
+        service: config_1.default.service,
+        servicepath: config_1.default.subservice
     };
     connection.v2.listEntities(optionPayload).then((response) => {
         // Entities retrieved successfully
@@ -109,8 +117,9 @@ function getEntities() {
     });
 }
 console.log('****************** PRESENTATION EVENTS SIMULATOR ******************');
+//SCHEDULER SECTION
 getEntities();
-var j = schedule.scheduleJob(config.default.cronExpression, function () {
+var j = schedule.scheduleJob(config_1.default.cronExpression, function () {
     var event;
     const run = async () => {
         event = generateRandomEvent();
@@ -120,4 +129,37 @@ var j = schedule.scheduleJob(config.default.cronExpression, function () {
     };
     run();
 });
+//LEDGER SECTION
+var ledgerClient;
+const ledger = async () => {
+    ledgerClient = await node_ledger_client_1.LedgerClient.init(config_fabric_network_1.default);
+    await chaincodeEventSubscribe(eventId, peerName).then((handle) => {
+        console.log('Handler received ' + JSON.stringify(handle));
+        handler = handle;
+    }, (err) => {
+        console.error('Handler received ' + err);
+    });
+};
+ledger();
+//Ledger Subscription
+async function chaincodeEventSubscribe(eventId, peerName) {
+    return ledgerClient.registerChaincodeEvent(ccid, peerName, eventId, (name, payload) => {
+        console.log('Event arrived with name: ' + name + ' and with payload ' + JSON.stringify(payload));
+        const run = async () => {
+            const createEntityResponse = await createEntity(payload.serialNumberItem, payload.itemType);
+            var attributes = extractAttributesFromEventPayload(payload);
+            const updateEntityResponse = await updateEntity(payload.serialNumberItem, payload.itemType, attributes);
+        };
+        run();
+    }, (err) => {
+        console.log('Errore ricevuto nell evento ' + err);
+        setTimeout(() => {
+            chaincodeEventSubscribe(eventId, peerName).then((handler) => {
+                console.log('Handler received ' + JSON.stringify(handler));
+            }, (err) => {
+                console.error('Handler received ' + err);
+            });
+        }, 1000);
+    });
+}
 //# sourceMappingURL=index.js.map

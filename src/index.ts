@@ -2,11 +2,21 @@ import * as schedule from 'node-schedule';
 import * as async from 'async';
 import * as await from 'await';
 import { EventPayload } from './EventPayload';
+import { LedgerClient } from 'node-ledger-client';
 
-import * as config from './conf/config';
+import {default as config} from './conf/config';
 
 var NGSI = require('ngsijs');
 
+//Fabric config
+import {default as fabricConfig} from './conf/config-fabric-network';
+
+var peerName = 'peer0.org1.example.com';
+var ccid = 'productunithub'
+var eventId = "EVENT";
+var handler = null;
+
+//
 /**
  * Returns a random number between min (inclusive) and max (exclusive)
  */
@@ -32,10 +42,10 @@ function randomString(length, chars) {
 function generateRandomEvent(){
   var event = <EventPayload>{};
   event.serialNumberItem=randomString(16, '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-  event.itemType=config.default.itemTypes[Math.floor(Math.random()*config.default.itemTypes.length)];
-  event.bayId="bay_"+getRandomInt(1,config.default.bay.n_bays);
-  event.bayCapacity=getRandomInt(0,config.default.bay.capacity_max);
-  event.bayLoad=getRandomInt(0,config.default.bay.load_max);
+  event.itemType=config.itemTypes[Math.floor(Math.random()*config.itemTypes.length)];
+  event.bayId="bay_"+getRandomInt(1,config.bay.n_bays);
+  event.bayCapacity=getRandomInt(0,config.bay.capacity_max);
+  event.bayLoad=getRandomInt(0,config.bay.load_max);
   return event;
 };
 
@@ -50,13 +60,13 @@ function  extractAttributesFromEventPayload(eventPayload){
 
 
 function createEntity(id, type){
-  var connection = new NGSI.Connection("http://"+config.default.contextBroker.host+":"+config.default.contextBroker.port);
+  var connection = new NGSI.Connection("http://"+config.contextBroker.host+":"+config.contextBroker.port);
   var createEntity=  connection.v2.createEntity({
     "id": id,
     "type": type,
   }, {
-  service: config.default.service,
-  servicepath: config.default.subservice
+  service: config.service,
+  servicepath: config.subservice
 });
 createEntity.then(
     (response) => {
@@ -81,8 +91,8 @@ function updateEntity(id, type, attributes){
   payload.id=id;
   payload.type=type;
   var optionPayload= {
-    service: config.default.service,
-    servicepath: config.default.subservice
+    service: config.service,
+    servicepath: config.subservice
   };
   for (var property in attributes) {
     if (attributes.hasOwnProperty(property)) {
@@ -92,7 +102,7 @@ function updateEntity(id, type, attributes){
         payload[property]=valueAttribute;
     }
 }
-  var connection = new NGSI.Connection("http://"+config.default.contextBroker.host+":"+config.default.contextBroker.port);
+  var connection = new NGSI.Connection("http://"+config.contextBroker.host+":"+config.contextBroker.port);
   connection.v2.appendEntityAttributes(payload,optionPayload
   ).then(
     (response) => {
@@ -109,11 +119,11 @@ function updateEntity(id, type, attributes){
 }
 
 function getEntities(){
-  var connection = new NGSI.Connection("http://"+config.default.contextBroker.host+":"+config.default.contextBroker.port);
+  var connection = new NGSI.Connection("http://"+config.contextBroker.host+":"+config.contextBroker.port);
 
   var optionPayload= {
-    service: config.default.service,
-    servicepath: config.default.subservice
+    service: config.service,
+    servicepath: config.subservice
   };
   connection.v2.listEntities(optionPayload).then(
     (response) => {
@@ -134,8 +144,11 @@ function getEntities(){
 
 console.log('****************** PRESENTATION EVENTS SIMULATOR ******************');
 
+
+
+//SCHEDULER SECTION
 getEntities();
-var j = schedule.scheduleJob(config.default.cronExpression, function(){
+var j = schedule.scheduleJob(config.cronExpression, function(){
   var event:EventPayload;
   const run = async () => {
     event=generateRandomEvent();
@@ -143,6 +156,45 @@ var j = schedule.scheduleJob(config.default.cronExpression, function(){
     var attributes=extractAttributesFromEventPayload(event);
     const updateEntityResponse = await updateEntity(event.serialNumberItem,event.itemType, attributes);
   };
-  
   run();
 })
+
+
+//LEDGER SECTION
+var ledgerClient;
+const ledger = async () => {
+  ledgerClient = await LedgerClient.init(fabricConfig); 
+  await chaincodeEventSubscribe(eventId, peerName).then((handle) => {
+    console.log('Handler received ' + JSON.stringify(handle));
+    handler = handle;
+}, (err) => {
+    console.error('Handler received ' + err);
+});
+};
+ledger();
+
+
+
+
+//Ledger Subscription
+async function chaincodeEventSubscribe(eventId: string, peerName: string) {
+  return ledgerClient.registerChaincodeEvent(ccid, peerName, eventId, (name, payload:EventPayload) => {
+      console.log('Event arrived with name: ' + name + ' and with payload ' + JSON.stringify(payload));
+      const run = async () => {
+      const createEntityResponse = await createEntity(payload.serialNumberItem,payload.itemType);
+      var attributes=extractAttributesFromEventPayload(payload);
+      const updateEntityResponse = await updateEntity(payload.serialNumberItem,payload.itemType, attributes);
+  };
+  run();
+  }, (err) => {
+      console.log('Errore ricevuto nell evento ' + err);
+      setTimeout(() => {
+          chaincodeEventSubscribe(eventId, peerName).then((handler) => {
+              console.log('Handler received ' + JSON.stringify(handler));
+          }, (err) => {
+              console.error('Handler received ' + err);
+          });
+      }, 1000);
+  });
+}
+
