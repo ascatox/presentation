@@ -11,9 +11,9 @@
 Firstly needs to edit conf/config.ts in order to define this settings:
 * context broker host (ip address) and port
 * service (tenant) and subservice (service path) of OCB
-* itemTypes a list of possible entity types
-* bay upper limit for capacity and load attributes and numbers of available bays 
-* cronExpression in order to setting the job scheduler
+* itemTypes a list of possible entity types (used by simulation mode)
+* bay upper limit for capacity and load attributes and numbers of available bays (used by simulation mode)
+* cronExpression in order to setting the job scheduler (used by simulation mode)
 ```
  "contextBroker": {
     "host": "167.99.89.178",
