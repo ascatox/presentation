@@ -4,18 +4,18 @@ import * as await from 'await';
 import { EventPayload } from './EventPayload';
 import { LedgerClient } from 'node-ledger-client';
 
-import {default as config} from './conf/config';
+import {default as config} from '../conf/config';
 
 var NGSI = require('ngsijs');
 
 //Fabric config
-import {default as fabricConfig} from './conf/config-fabric-network';
+//import {default as fabricConfig} from '../conf/config-fabric-network';
+const fabricConfig = require('../resources/config-fabric-network.json');
 
-var peerName = 'peer0.org1.example.com';
-var ccid = 'productunithub'
+const peerName = fabricConfig.organizations[0].peers[0].name;
+const ccid = fabricConfig.chaincode.name;
 var eventId = "EVENT";
 var handler = null;
-
 //
 /**
  * Returns a random number between min (inclusive) and max (exclusive)
