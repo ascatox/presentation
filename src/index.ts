@@ -180,6 +180,7 @@ ledger();
 async function chaincodeEventSubscribe(eventId: string, peerName: string) {
   return ledgerClient.registerChaincodeEvent(ccid, peerName, eventId, (event) => {
       console.log('Event arrived with name: ' + event.event_name + ' and with payload ' + Buffer.from(event.payload));
+      const payload = JSON.parse(Buffer.from(event.payload));
       const run = async () => {
       const createEntityResponse = await createEntity(payload.serialNumberItem,payload.itemType);
       var attributes=extractAttributesFromEventPayload(payload);
