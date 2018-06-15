@@ -3,12 +3,12 @@
     "type": "hlfv1.1",
     "channelName": "ledgerchannel",
     "timeout": 5000,
-    "cryptoconfigdir": "/Users/gabriele/Documents/crypto-config",
+    "cryptoconfigdir": "/Users/ascatox/Desktop/crypto-config",
     "tls": false,
     "chaincode": {
-      "path": "analytics-chaincode",
-      "name": "analytics-chaincode",
-      "version": "1.3",
+      "path": "smart-conveyor-chaincode",
+      "name": "smart-conveyor-chaincode",
+      "version": "1.0",
       "lang": "NODE"
     },
     "organizations": [
@@ -18,18 +18,18 @@
         "peers": [
           {
             "name": "peer0.org1.example.com",
-            "requestURL": "grpc://167.99.89.178:7051",
-            "eventURL": "grpc://167.99.89.178:7053"
+            "requestURL": "grpc://localhost:7051",
+            "eventURL": "grpc://localhost:7053"
           }
         ],
         "ca": {
-          "url": "http://167.99.89.178:7054",
+          "url": "http://localhost:7054",
           "name": "ca.example.com"
         },
         "orderers": [
           {
             "name": "orderer.example.com",
-            "url": "grpc://167.99.89.178:7050"
+            "url": "grpc://localhost:7050"
           }
         ],
         "users": [

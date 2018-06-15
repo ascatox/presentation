@@ -49,3 +49,12 @@ services:
             - ./data/wirecloud/static:/var/www/static
 
 
+#   presentation:
+#       image: faredge/presentation:latest
+#       volumes:
+#        - /opt/hyperledger/configuration-network-fabric/crypto-config:/crypto-config
+#        - /opt/hyperledger/product-unit-hub-web-interface/resources:/usr/src/resources
+#        - /opt/hyperledger/event-generator-input/data:/usr/src/data      
+#       depends_on: 
+#        - wirecloud
+#        - orion

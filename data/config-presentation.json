@@ -1,9 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = {
+{
     "contextBroker": {
-        "host": "167.99.89.178",
-        "port": 1026
+        "host": "localhost",
+        "port": 1026,
+        "protocol": "http"
     },
     "service": "faredge",
     "subservice": "/demo",
@@ -13,6 +12,8 @@ exports.default = {
         "load_max": 100,
         "n_bays": 20
     },
-    "cronExpression": "20 * * * * *"
-};
-//# sourceMappingURL=config.js.map
+    "cronExpression": "20 * * * * *",
+    "event": {
+        "name": "EVENT"
+    }
+}
