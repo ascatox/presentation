@@ -55,20 +55,20 @@ async function getEntity(id, type) {
     return await ngsiConnection.v2.getEntity({
         id: id,
         type: type,
-        keyValues: true
+    }, {
+        service: config.service,
+        servicepath: config.subservice
     });
 }
-async function createEntity(id, type) {
-    let result = null;
-    try {
-        result = await getEntity(id, type);
-        Log.logger.warn("getEntity element with id " + chalk.yellow(id) + " and type " + chalk.yellow(type) + " FOUND");
-    }
-    catch (err) {
-        Log.logger.warn("getEntity element with id " + chalk.yellow(id) + " and type " + chalk.yellow(type) + " NOT exists");
-    }
-    if (!result)
-        return;
+function createEntity(id, type) {
+    // let isAlreadyPresent = null;
+    // try {
+    //   isAlreadyPresent = await getEntity(id, type);
+    //   Log.logger.warn("getEntity element with id " + chalk.yellow(id) + " and type " + chalk.yellow(type) + " FOUND");
+    // } catch (err) {
+    //   Log.logger.warn("getEntity element with id " + chalk.yellow(id) + " and type " + chalk.yellow(type) + " NOT exists");
+    // }
+    // if (!isAlreadyPresent) return;
     var createEntity = ngsiConnection.v2.createEntity({
         id: id,
         type: type,
@@ -84,7 +84,7 @@ async function createEntity(id, type) {
         // Error creating the entity
         // If the error was reported by Orion, error.correlator will be
         // filled with the associated transaction id
-        Log.logger.error("error create Entity OCB " + chalk.red.bold(JSON.stringify(error)));
+        Log.logger.warn("error create Entity OCB " + chalk.yellow(JSON.stringify(error)));
     });
     return createEntity;
 }
@@ -171,7 +171,12 @@ async function chaincodeEventSubscribe(eventId, peerName) {
         const payloadItemType = JSON.parse(payload.itemType);
         payload.itemType = payloadItemType.description;
         const run = async () => {
-            const createEntityResponse = await createEntity(payload.serialNumberItem, payload.itemType);
+            try {
+                const createEntityResponse = await createEntity(payload.serialNumberItem, payload.itemType);
+            }
+            catch (err) {
+                Log.logger.warn("Element with id " + chalk.green(payload.serialNumberItem) + " and type " + chalk.green(payload.itemType) + " already EXISTS");
+            }
             var attributes = extractAttributesFromEventPayload(payload);
             const updateEntityResponse = await updateEntity(payload.serialNumberItem, payload.itemType, attributes);
         };
