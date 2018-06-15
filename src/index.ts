@@ -73,14 +73,6 @@ async function getEntity(id, type) {
 }
 
 function createEntity(id, type) {
-  // let isAlreadyPresent = null;
-  // try {
-  //   isAlreadyPresent = await getEntity(id, type);
-  //   Log.logger.warn("getEntity element with id " + chalk.yellow(id) + " and type " + chalk.yellow(type) + " FOUND");
-  // } catch (err) {
-  //   Log.logger.warn("getEntity element with id " + chalk.yellow(id) + " and type " + chalk.yellow(type) + " NOT exists");
-  // }
-  // if (!isAlreadyPresent) return;
   var createEntity = ngsiConnection.v2.createEntity({
     id: id,
     type: type,
@@ -97,7 +89,8 @@ function createEntity(id, type) {
       // Error creating the entity
       // If the error was reported by Orion, error.correlator will be
       // filled with the associated transaction id
-      Log.logger.warn("error create Entity OCB " + chalk.yellow(JSON.stringify(error)));
+      if (error.message !== 'Unexpected error code: 422') //Already exists
+        Log.logger.error("error create Entity OCB " + chalk.yellow(JSON.stringify(error)));
     }
   );
   return createEntity;

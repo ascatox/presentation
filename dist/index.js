@@ -84,7 +84,8 @@ function createEntity(id, type) {
         // Error creating the entity
         // If the error was reported by Orion, error.correlator will be
         // filled with the associated transaction id
-        Log.logger.warn("error create Entity OCB " + chalk.yellow(JSON.stringify(error)));
+        if (error.message !== 'Unexpected error code: 422')
+            Log.logger.error("error create Entity OCB " + chalk.yellow(JSON.stringify(error)));
     });
     return createEntity;
 }
