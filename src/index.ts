@@ -197,7 +197,7 @@ async function chaincodeEventSubscribe(eventId: string, peerName: string) {
       try {
         const createEntityResponse = await createEntity(payload.serialNumberItem, payload.itemType);
       } catch (err) {
-        Log.logger.warn("Element with id " + chalk.green(payload.serialNumberItem) + " and type " + chalk.green(payload.itemType) + " already EXISTS");
+        Log.logger.warn("Element with id " + chalk.yellow(payload.serialNumberItem) + " and type " + chalk.yellow(payload.itemType) + " already EXISTS");
       }
       var attributes = extractAttributesFromEventPayload(payload);
       const updateEntityResponse = await updateEntity(payload.serialNumberItem, payload.itemType, attributes);
