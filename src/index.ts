@@ -59,8 +59,8 @@ function extractAttributesFromEventPayload(eventPayload) {
   attributes = Object.assign({}, eventPayload);
   delete attributes['id'];
   delete attributes['type'];
-  //delete attributes['items'];
-  //delete attributes['preferences'];
+  delete attributes['items'];
+  delete attributes['preferences'];
   return attributes;
 }
 
@@ -69,10 +69,9 @@ async function getEntity(id, type) {
   return await ngsiConnection.v2.getEntity({
     id: id,
     type: type,
-  }, {
-      service: config.service,
-      servicepath: config.subservice
-    });
+    service: config.service,
+    servicepath: config.subservice
+  });
 }
 
 async function createEntity(id, type) {
@@ -108,24 +107,15 @@ async function updateEntity(id, type, attributes) {
     service: config.service,
     servicepath: config.subservice
   };
-  if (attributes)
-    payload.attributes = [];
   for (var property in attributes) {
     if (attributes.hasOwnProperty(property)) {
       // do stuff
-      let attribute = {
-        name: property,
-        type: 'string',
-        value: attributes[property]
-      };
-      payload.attributes.push(attribute);
-      // var valueAttribute: { [k: string]: any } = {};
-      // valueAttribute.value = attributes[property];
-      // payload[property] = valueAttribute;
+       var valueAttribute: { [k: string]: any } = {};
+       valueAttribute.value = attributes[property];
+       payload[property] = valueAttribute;
     }
 
   }
-  Log.logger.debug('Context NGSI created ' + JSON.stringify(payload));
   //var connection = new NGSI.Connection(ORION_URL);
   return await ngsiConnection.v2.appendEntityAttributes(payload, optionPayload);
   /*.then(
@@ -141,6 +131,7 @@ async function updateEntity(id, type, attributes) {
     }
   );*/
 }
+
 
 function getEntities() {
   //var connection = new NGSI.Connection(ORION_URL);
@@ -208,18 +199,18 @@ async function chaincodeEventSubscribe(eventId: string, peerName: string) {
     const run = async () => {
       const attributes = extractAttributesFromEventPayload(payload);
       try {
-        const createEntityResponse = await createEntity(payload.id, payload.type);
-      } catch (err) {
-       /* if (err.message === 'Unexpected error code: 422')
-          Log.logger.warn("Element with id " + payload.id + " already EXISTS");
-          
-        else*/
-          Log.logger.error("Element with id " + payload.id + " error in " + chalk.red.bold("CREATE") + " code error: " + err);
-      }
-      try {
+        try {
+          const getEntityResponse = await getEntity(payload.id, payload.type);
+        } catch (err) {
+          if (err.message === 'Unexpected error code: 400') { //NOT FOUND
+            const createEntityResponse = await createEntity(payload.id, payload.type);
+          }
+          else
+            Log.logger.error("Element with id " + payload.id + " error in " + " code error: " + err);
+        }
         const updateEntityResponse = await updateEntity(payload.id, payload.type, attributes);
       } catch (err) {
-        Log.logger.error("Element with id " + payload.id + " error in " + chalk.red.bold("UPDATE") + " code error: " + err);
+        Log.logger.error("Element with id " + payload.id + " error in " + " code error: " + err);
       }
     };
     run();

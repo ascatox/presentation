@@ -4,4 +4,5 @@ export interface EventPayload {
     preferences       : string;   
     loadFactor        : string;
     items             : string;
+    enable            : string
 }
