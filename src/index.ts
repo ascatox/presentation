@@ -111,20 +111,22 @@ async function updateEntity(id, type, attributes) {
        var valueAttribute: { [k: string]: any } = {};
        if ((property=="items")||(property=="preferences")){
         
-        valueAttribute.value = JSON.stringify(attributes[property]);
-        valueAttribute.value=valueAttribute.value.split('"').join('');
-        valueAttribute.value=valueAttribute.value.split('\"').join('');
-        valueAttribute.value=valueAttribute.value.split('\\').join('');
+        //valueAttribute.value = JSON.stringify(attributes[property]);
+        //valueAttribute.value=valueAttribute.value.split('"').join('');
+        //valueAttribute.value=valueAttribute.value.split('\"').join('');
+        //valueAttribute.value=valueAttribute.value.split('\\').join('');
+        valueAttribute.value=JSON.parse(attributes[property]);
 
       
       }else{
         valueAttribute.value = attributes[property];
       } 
        payload[property] = valueAttribute;
+       
     }
 
   }
-
+  
   //console.log("payload="+JSON.stringify(payload));
   //var connection = new NGSI.Connection(ORION_URL);
   return await ngsiConnection.v2.appendEntityAttributes(payload, optionPayload);
