@@ -206,11 +206,11 @@ async function chaincodeEventSubscribe(eventId: string, peerName: string) {
             const createEntityResponse = await createEntity(payload.id, payload.type);
           }
           else
-            Log.logger.error("Element with id " + payload.id + " error in " + " code error: " + err);
+            Log.logger.error("Element with id " + payload.id + " with" + " code error: " + err);
         }
         const updateEntityResponse = await updateEntity(payload.id, payload.type, attributes);
       } catch (err) {
-        Log.logger.error("Element with id " + payload.id + " error in " + " code error: " + err);
+        Log.logger.error("Element with id " + payload.id + "with " + " code error: " + err);
       }
     };
     run();
