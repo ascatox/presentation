@@ -202,7 +202,7 @@ async function chaincodeEventSubscribe(eventId: string, peerName: string) {
         try {
           const getEntityResponse = await getEntity(payload.id, payload.type);
         } catch (err) {
-          if (err.message === 'Unexpected error code: 400') { //NOT FOUND
+          if (err.message === 'Unexpected error code: 404') { //NOT FOUND
             const createEntityResponse = await createEntity(payload.id, payload.type);
           }
           else
