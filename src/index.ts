@@ -42,22 +42,23 @@ function randomString(length, chars) {
 }
 
 
+/*
 function generateRandomEvent() {
   var event = <EventPayload>{};
-  event.serialNumberItem = randomString(16, '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-  event.itemType = config.itemTypes[Math.floor(Math.random() * config.itemTypes.length)];
+  event.id = randomString(16, '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  event.type = config.itemTypes[Math.floor(Math.random() * config.itemTypes.length)];
   event.bayId = "bay_" + getRandomInt(1, config.bay.n_bays);
   event.bayCapacity = getRandomInt(0, config.bay.capacity_max);
   event.bayLoad = getRandomInt(0, config.bay.load_max);
   return event;
 };
-
+*/
 
 function extractAttributesFromEventPayload(eventPayload) {
   var attributes: { [k: string]: any } = {};
   attributes = Object.assign({}, eventPayload);
-  delete attributes['serialNumberItem'];
-  delete attributes['itemType'];
+  delete attributes['id'];
+  delete attributes['type'];
   return attributes;
 }
 
@@ -191,16 +192,14 @@ async function chaincodeEventSubscribe(eventId: string, peerName: string) {
   return ledgerClient.registerChaincodeEvent(ccid, peerName, eventId, (event) => {
     Log.logger.info('Event arrived with name: ' + chalk.blue.bold(event.event_name) + ' and with payload ' + chalk.yellow(Buffer.from(event.payload)));
     const payload: EventPayload = JSON.parse(event.payload.toString());
-    const payloadItemType = JSON.parse(payload.itemType);
-    payload.itemType = payloadItemType.description;
     const run = async () => {
       try {
-        const createEntityResponse = await createEntity(payload.serialNumberItem, payload.itemType);
+        const createEntityResponse = await createEntity(payload.id, payload.type);
       } catch (err) {
-        Log.logger.warn("Element with id " + chalk.yellow(payload.serialNumberItem) + " and type " + chalk.yellow(payload.itemType) + " already EXISTS");
+        Log.logger.warn("Element with id " + chalk.yellow(payload.id) + " and type " + chalk.yellow(payload.type) + " already EXISTS");
       }
       var attributes = extractAttributesFromEventPayload(payload);
-      const updateEntityResponse = await updateEntity(payload.serialNumberItem, payload.itemType, attributes);
+      const updateEntityResponse = await updateEntity(payload.id, payload.type, attributes);
     };
     run();
   }, (err) => {
