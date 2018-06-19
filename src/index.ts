@@ -59,8 +59,6 @@ function extractAttributesFromEventPayload(eventPayload) {
   attributes = Object.assign({}, eventPayload);
   delete attributes['id'];
   delete attributes['type'];
-  delete attributes['items'];
-  delete attributes['preferences'];
   return attributes;
 }
 
