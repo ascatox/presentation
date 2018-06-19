@@ -59,6 +59,8 @@ function extractAttributesFromEventPayload(eventPayload) {
   attributes = Object.assign({}, eventPayload);
   delete attributes['id'];
   delete attributes['type'];
+  //delete attributes['items'];
+  //delete attributes['preferences'];
   return attributes;
 }
 
@@ -73,15 +75,15 @@ async function getEntity(id, type) {
     });
 }
 
-function createEntity(id, type) {
-  var createEntity = ngsiConnection.v2.createEntity({
+async function createEntity(id, type) {
+  return await ngsiConnection.v2.createEntity({
     id: id,
     type: type,
   }, {
       service: config.service,
       servicepath: config.subservice
     });
-  createEntity.then(
+  /*createEntity.then(
     (response) => {
       // Entity created successfully
       // response.correlator transaction id associated with the server response
@@ -95,10 +97,10 @@ function createEntity(id, type) {
     }
   );
   return createEntity;
-
+  */
 }
 
-function updateEntity(id, type, attributes) {
+async function updateEntity(id, type, attributes) {
   var payload: { [k: string]: any } = {};
   payload.id = id;
   payload.type = type;
@@ -106,17 +108,27 @@ function updateEntity(id, type, attributes) {
     service: config.service,
     servicepath: config.subservice
   };
+  if (attributes)
+    payload.attributes = [];
   for (var property in attributes) {
     if (attributes.hasOwnProperty(property)) {
       // do stuff
-      var valueAttribute: { [k: string]: any } = {};
-      valueAttribute["value"] = attributes[property];
-      payload[property] = valueAttribute;
+      let attribute = {
+        name: property,
+        type: 'string',
+        value: attributes[property]
+      };
+      payload.attributes.push(attribute);
+      // var valueAttribute: { [k: string]: any } = {};
+      // valueAttribute.value = attributes[property];
+      // payload[property] = valueAttribute;
     }
+
   }
+  Log.logger.debug('Context NGSI created ' + JSON.stringify(payload));
   //var connection = new NGSI.Connection(ORION_URL);
-  ngsiConnection.v2.appendEntityAttributes(payload, optionPayload
-  ).then(
+  return await ngsiConnection.v2.appendEntityAttributes(payload, optionPayload);
+  /*.then(
     (response) => {
       // Attributes appended successfully
       // response.correlator transaction id associated with the server response
@@ -125,9 +137,9 @@ function updateEntity(id, type, attributes) {
       // Error appending the attributes to the entity
       // If the error was reported by Orion, error.correlator will be
       // filled with the associated transaction id
-      Log.logger.error("error update Entity OCB " + chalk.red.bold(JSON.stringify(error)));
+      Log.logger.error("error update Entity OCB with id " + id + chalk.red.bold(JSON.stringify(error)));
     }
-  );
+  );*/
 }
 
 function getEntities() {
@@ -190,16 +202,25 @@ ledger();
 //Ledger Subscription
 async function chaincodeEventSubscribe(eventId: string, peerName: string) {
   return ledgerClient.registerChaincodeEvent(ccid, peerName, eventId, (event) => {
-    Log.logger.info('Event arrived with name: ' + chalk.blue.bold(event.event_name) + ' and with payload ' + chalk.yellow(Buffer.from(event.payload)));
+    Log.logger.info('Event arrived with name: ' + chalk.blue.bold(event.event_name) +
+      ' and with payload ' + chalk.yellow(Buffer.from(event.payload)));
     const payload: EventPayload = JSON.parse(event.payload.toString());
     const run = async () => {
+      const attributes = extractAttributesFromEventPayload(payload);
       try {
         const createEntityResponse = await createEntity(payload.id, payload.type);
       } catch (err) {
-        Log.logger.warn("Element with id " + chalk.yellow(payload.id) + " and type " + chalk.yellow(payload.type) + " already EXISTS");
+       /* if (err.message === 'Unexpected error code: 422')
+          Log.logger.warn("Element with id " + payload.id + " already EXISTS");
+          
+        else*/
+          Log.logger.error("Element with id " + payload.id + " error in " + chalk.red.bold("CREATE") + " code error: " + err);
       }
-      var attributes = extractAttributesFromEventPayload(payload);
-      const updateEntityResponse = await updateEntity(payload.id, payload.type, attributes);
+      try {
+        const updateEntityResponse = await updateEntity(payload.id, payload.type, attributes);
+      } catch (err) {
+        Log.logger.error("Element with id " + payload.id + " error in " + chalk.red.bold("UPDATE") + " code error: " + err);
+      }
     };
     run();
   }, (err) => {

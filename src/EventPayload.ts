@@ -2,6 +2,6 @@ export interface EventPayload {
     id                : string;
     type              : string;
     preferences       : string;   
-    loadFactor        : number;
+    loadFactor        : string;
     items             : string;
 }
