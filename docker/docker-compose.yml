@@ -6,6 +6,7 @@ services:
    command: --nojournal
    volumes:
      - ./data/mongo/data:/data/db
+  
   orion:
    image: fiware/orion:1.13.0
    depends_on:
@@ -57,9 +58,9 @@ services:
       ports:
        - 9300:3000
       volumes:
-       - /opt/hyperledger/configuration-network-fabric/crypto-config:/crypto-config
-       - /opt/hyperledger/presentation/resources:/usr/src/resources
-       - /opt/hyperledger/presentation/config:/usr/src/data
+       - /opt/hyperledger/presentation/docker/crypto-config:/crypto-config
+       - /opt/hyperledger/presentation/docker/resources:/usr/src/resources
+       - /opt/hyperledger/presentation/docker/config:/usr/src/data
 
   event-generator-output:
      container_name: event-generator-output
@@ -70,9 +71,10 @@ services:
      ports:
       - 9301:3000
      volumes:
-      - /opt/hyperledger/configuration-network-fabric/crypto-config:/crypto-config
-      - /opt/hyperledger/presentation/resources:/usr/src/resources
-      - /opt/hyperledger/presentation/config:/usr/src/conf
+      - /opt/hyperledger/presentation/docker/crypto-config:/crypto-config
+      - /opt/hyperledger/presentation/docker/resources:/usr/src/resources
+      - /opt/hyperledger/presentation/docker/config:/usr/src/conf
+      
    
   presentation:
      container_name: presentation
@@ -86,8 +88,7 @@ services:
         - event-generator-input
         - event-generator-output
      volumes:
-      - /opt/hyperledger/configuration-network-fabric/crypto-config:/crypto-config
-      - /opt/hyperledger/presentation/resources:/usr/src/resources
-      - /opt/hyperledger/presentation/config:/usr/src/data
-
-
+      - /opt/hyperledger/presentation/docker/crypto-config:/crypto-config
+      - /opt/hyperledger/presentation/docker/resources:/usr/src/resources
+      - /opt/hyperledger/presentation/docker/config:/usr/src/data
+  
