@@ -19,7 +19,7 @@ services:
     #restart: always
    image: nginx:latest
    ports:
-        - "8280:80"
+        - "80:80"
    volumes:
         - ./nginx.conf:/etc/nginx/nginx.conf:ro
    volumes_from:
@@ -40,21 +40,54 @@ services:
         - "8300:3000"
 
   wirecloud:
-        image: fiware/wirecloud:latest-composable
-        depends_on:
-            - postgres
-            - ngsi-proxy
-        volumes:
-            - ./data/wirecloud/wirecloud_instance:/opt/wirecloud_instance
-            - ./data/wirecloud/static:/var/www/static
+      image: fiware/wirecloud:latest-composable
+      depends_on:
+        - postgres
+        - ngsi-proxy
+      volumes:
+        - ./data/wirecloud/wirecloud_instance:/opt/wirecloud_instance
+        - ./data/wirecloud/static:/var/www/static
+  
+  event-generator-input:
+      container_name: event-generator-input
+      image: ascatox/event-generator-input
+      environment:
+       - LOGGING_LEVEL = debug
+       - FILENAME = logger_input.txt
+      ports:
+       - 9300:3000
+      volumes:
+       - /opt/hyperledger/configuration-network-fabric/crypto-config:/crypto-config
+       - /opt/hyperledger/presentation/resources:/usr/src/resources
+       - /opt/hyperledger/presentation/config:/usr/src/data
+
+  event-generator-output:
+     container_name: event-generator-output
+     image: ascatox/event-generator-output
+     environment:
+      - LOGGING_LEVEL = debug
+      - FILENAME = logger_input.txt
+     ports:
+      - 9301:3000
+     volumes:
+      - /opt/hyperledger/configuration-network-fabric/crypto-config:/crypto-config
+      - /opt/hyperledger/presentation/resources:/usr/src/resources
+      - /opt/hyperledger/presentation/config:/usr/src/conf
+   
+  presentation:
+     container_name: presentation
+     image: ascatox/presentation
+     environment:
+      - LOGGING_LEVEL = debug
+      - FILENAME = logger_input.txt
+     depends_on:
+        - orion
+        - wirecloud
+        - event-generator-input
+        - event-generator-output
+     volumes:
+      - /opt/hyperledger/configuration-network-fabric/crypto-config:/crypto-config
+      - /opt/hyperledger/presentation/resources:/usr/src/resources
+      - /opt/hyperledger/presentation/config:/usr/src/data
 
 
-#   presentation:
-#       image: faredge/presentation:latest
-#       volumes:
-#        - /opt/hyperledger/configuration-network-fabric/crypto-config:/crypto-config
-#        - /opt/hyperledger/product-unit-hub-web-interface/resources:/usr/src/resources
-#        - /opt/hyperledger/event-generator-input/data:/usr/src/data      
-#       depends_on: 
-#        - wirecloud
-#        - orion
