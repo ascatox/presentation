@@ -1,2 +1,2 @@
 #!/bin/sh
-docker build -t ascatox/presentation .
+tsc && docker build -t ascatox/presentation .
