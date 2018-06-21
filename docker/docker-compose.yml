@@ -38,7 +38,7 @@ services:
   ngsi-proxy:
       image: fiware/ngsiproxy
       ports:
-        - "8300:3000"
+        - "3000:3000"
 
   wirecloud:
       image: fiware/wirecloud:latest-composable
