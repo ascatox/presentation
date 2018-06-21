@@ -19,6 +19,9 @@ var eventId = config.event.name;
 var handler = null;
 const ORION_URL = config.contextBroker.protocol + "://" + config.contextBroker.host + ":" + config.contextBroker.port;
 const ngsiConnection = new NGSI.Connection(ORION_URL);
+
+const mockData = process.env.MOCK_DATA || '1';
+const bayCapacity: number = parseInt(process.env.BAY_CAPACITY) || 8;
 //
 /**
  * Returns a random number between min (inclusive) and max (exclusive)
@@ -39,6 +42,16 @@ function randomString(length, chars) {
   var result = '';
   for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
   return result;
+}
+
+function mock(eventPayload: EventPayload) {
+  if (mockData === '1') {
+    const items = JSON.parse(eventPayload.items);
+    const size = items.length;
+    const loadFactor = (size / bayCapacity) * 100;
+    eventPayload.loadFactor = loadFactor + '';
+  }
+  return eventPayload;
 }
 
 
@@ -108,25 +121,25 @@ async function updateEntity(id, type, attributes) {
   for (var property in attributes) {
     if (attributes.hasOwnProperty(property)) {
       // do stuff
-       var valueAttribute: { [k: string]: any } = {};
-       if ((property=="items")||(property=="preferences")){
-        
+      var valueAttribute: { [k: string]: any } = {};
+      if ((property == "items") || (property == "preferences")) {
+
         //valueAttribute.value = JSON.stringify(attributes[property]);
         //valueAttribute.value=valueAttribute.value.split('"').join('');
         //valueAttribute.value=valueAttribute.value.split('\"').join('');
         //valueAttribute.value=valueAttribute.value.split('\\').join('');
-        valueAttribute.value=JSON.parse(attributes[property]);
+        valueAttribute.value = JSON.parse(attributes[property]);
 
-      
-      }else{
+
+      } else {
         valueAttribute.value = attributes[property];
-      } 
-       payload[property] = valueAttribute;
-       
+      }
+      payload[property] = valueAttribute;
+
     }
 
   }
-  
+
   //console.log("payload="+JSON.stringify(payload));
   //var connection = new NGSI.Connection(ORION_URL);
   return await ngsiConnection.v2.appendEntityAttributes(payload, optionPayload);
@@ -207,7 +220,7 @@ async function chaincodeEventSubscribe(eventId: string, peerName: string) {
   return ledgerClient.registerChaincodeEvent(ccid, peerName, eventId, (event) => {
     Log.logger.info('Event arrived with name: ' + chalk.blue.bold(event.event_name) +
       ' and with payload ' + chalk.yellow(Buffer.from(event.payload)));
-    const payload: EventPayload = JSON.parse(event.payload.toString());
+    const payload: EventPayload = mock(JSON.parse(event.payload.toString()));
     const run = async () => {
       const attributes = extractAttributesFromEventPayload(payload);
       try {
