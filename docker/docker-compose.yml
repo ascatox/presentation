@@ -82,6 +82,8 @@ services:
   #    environment:
   #     - LOGGING_LEVEL = debug
   #     - FILENAME = logger_input.txt
+  #     - MOCK_DATA = 1
+  #     - BAY_CAPACITY = 8
   #    depends_on:
   #       - orion
   #       - wirecloud
